@@ -15,6 +15,7 @@ class Autopilot:
         self._fc = flight_controller
         self._mode: AutopilotMode = AutopilotMode.DISABLED
         self._target: Optional[Target] = None
+        self._fc_lost_time: Optional[float] = None
         self._lock = threading.Lock()
         
         self._kp_roll: float = config.KP_ROLL
@@ -95,12 +96,22 @@ class Autopilot:
     def _update_logic(self):
         """Проверка состояний, таймаутов и формирование RC-команд"""
         with self._lock:
-            # Проверка связи с Flight Controller
-            if not self._fc.is_connected():
+            now = time.time()
+
+        # Проверка связи с Flight Controller 
+        if not self._fc.is_connected():
+            if self._fc_lost_time is None:
+                # связь впервые пропала
+                self._fc_lost_time = now
+            elif now - self._fc_lost_time >= config.FC_TIMEOUT:
+                # Таймаут
                 self._mode = AutopilotMode.FAILSAFE
-            elif self._mode == AutopilotMode.FAILSAFE and self._fc.is_connected():
-                # Автовосстановление связи
-                self._mode = AutopilotMode.SEARCH if self._target is None else AutopilotMode.ACTIVE
+        else:
+            # Связь есть
+            self._fc_lost_time = None
+
+            # Автовосстановление связи
+            self._mode = AutopilotMode.SEARCH if self._target is None else AutopilotMode.ACTIVE
 
             # Если выключен
             if self._mode == AutopilotMode.DISABLED:
@@ -140,7 +151,7 @@ class Autopilot:
         if abs(dx) <= config.DEADZONE:
             roll = config.RC_NEUTRAL
         else:
-            # Используем настраиваемый коэффициент self._kp_roll
+            # Настраиваемый коэффициент self._kp_roll
             roll = int(config.RC_NEUTRAL + self._kp_roll * dx)
 
         # PITCH (Ось Y) 

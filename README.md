@@ -11,6 +11,7 @@
 git clone https://github.com/V-AI-ops/Autopilot.git
 cd Autopilot
 python main.py
+```
 
 ## Архитектура проекта 
 

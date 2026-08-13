@@ -7,8 +7,9 @@
 1. Требования: Установленный Python 3.10 или выше.
 2. Сторонние библиотеки не требуются (использована только стандартная библиотека Python).
 3. Запуск программы:
-   ```bash
-   python main.py
+    git clone https://github.com/V-AI-ops/Autopilot.git
+    cd Autopilot
+    python main.py
 
 ## Архитектура проекта 
 
